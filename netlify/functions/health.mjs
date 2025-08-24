@@ -1,4 +1,4 @@
-import { config, getFlaskApiUrl } from './config.mjs';
+import { config as appConfig, getFlaskApiUrl } from './config.mjs';
 
 export default async (req, context) => {
   // Handle CORS

@@ -1,4 +1,4 @@
-import { config, getFlaskApiUrl, validateInput } from './config.mjs';
+import { config as appConfig, getFlaskApiUrl, validateInput } from './config.mjs';
 
 export default async (req, context) => {
   // Handle CORS
@@ -61,7 +61,7 @@ export default async (req, context) => {
     }
 
     // Try to connect to Flask API first
-    if (config.prediction.fallbackEnabled) {
+    if (appConfig.prediction.fallbackEnabled) {
       try {
         const flaskApiUrl = getFlaskApiUrl('predict');
         
@@ -74,7 +74,7 @@ export default async (req, context) => {
             pct_min: pct_min,
             cum_min: cum_min
           }),
-          signal: AbortSignal.timeout(config.flaskApi.timeout)
+          signal: AbortSignal.timeout(appConfig.flaskApi.timeout)
         });
 
         if (flaskResponse.ok) {
