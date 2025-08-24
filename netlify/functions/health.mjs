@@ -1,3 +1,5 @@
+import { config, getFlaskApiUrl } from './config.mjs';
+
 export default async (req, context) => {
   // Handle CORS
   if (req.method === 'OPTIONS') {
@@ -25,11 +27,42 @@ export default async (req, context) => {
   }
 
   try {
+    // Check Flask API status
+    let flaskApiStatus = 'unknown';
+    let flaskApiResponse = null;
+    
+    try {
+      const flaskHealthUrl = getFlaskApiUrl('health');
+      const flaskResponse = await fetch(flaskHealthUrl, {
+        method: 'GET',
+        signal: AbortSignal.timeout(5000) // 5 second timeout
+      });
+      
+      if (flaskResponse.ok) {
+        flaskApiStatus = 'healthy';
+        flaskApiResponse = await flaskResponse.json();
+      } else {
+        flaskApiStatus = 'unhealthy';
+      }
+    } catch (flaskError) {
+      flaskApiStatus = 'unavailable';
+      console.log('Flask API health check failed:', flaskError.message);
+    }
+
     return new Response(JSON.stringify({
       status: 'healthy',
       models_loaded: true,
-      prediction_type: 'mock_demonstration',
-      note: 'Using mock prediction logic for demonstration. Full ML models available in Flask deployment.',
+      prediction_type: flaskApiStatus === 'healthy' ? 'flask_api' : 'mock_fallback',
+      flask_api: {
+        status: flaskApiStatus,
+        url: getFlaskApiUrl('predict'),
+        health_url: getFlaskApiUrl('health'),
+        response: flaskApiResponse
+      },
+      netlify_functions: {
+        status: 'healthy',
+        functions: ['predict', 'health']
+      },
       timestamp: new Date().toISOString(),
       environment: 'netlify'
     }), {

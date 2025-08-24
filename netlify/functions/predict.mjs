@@ -1,6 +1,4 @@
-import { spawn } from 'child_process';
-import { writeFileSync, readFileSync } from 'fs';
-import { join } from 'path';
+import { config, getFlaskApiUrl, validateInput } from './config.mjs';
 
 export default async (req, context) => {
   // Handle CORS
@@ -46,10 +44,13 @@ export default async (req, context) => {
       });
     }
 
-    if (pct_min < 20 || pct_min > 50) {
+    // Use configuration validation
+    try {
+      validateInput(pct_min, cum_min);
+    } catch (validationError) {
       return new Response(JSON.stringify({
         success: false,
-        error: 'PCT_MIN_0.25MM_60MSH must be between 20 and 50'
+        error: validationError.message
       }), {
         status: 400,
         headers: {
@@ -59,19 +60,50 @@ export default async (req, context) => {
       });
     }
 
-    if (cum_min < 80 || cum_min > 90) {
-      return new Response(JSON.stringify({
-        success: false,
-        error: 'CUM_MIN_3.15MM must be between 80 and 90'
-      }), {
-        status: 400,
-        headers: {
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*',
-        },
-      });
+    // Try to connect to Flask API first
+    if (config.prediction.fallbackEnabled) {
+      try {
+        const flaskApiUrl = getFlaskApiUrl('predict');
+        
+        const flaskResponse = await fetch(flaskApiUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            pct_min: pct_min,
+            cum_min: cum_min
+          }),
+          signal: AbortSignal.timeout(config.flaskApi.timeout)
+        });
+
+        if (flaskResponse.ok) {
+          const flaskResult = await flaskResponse.json();
+          
+          // Return the Flask API result
+          return new Response(JSON.stringify({
+            success: true,
+            result: flaskResult.result || flaskResult,
+            source: 'flask_api',
+            api_url: flaskApiUrl
+          }), {
+            status: 200,
+            headers: {
+              'Content-Type': 'application/json',
+              'Access-Control-Allow-Origin': '*',
+            },
+          });
+        } else {
+          console.log(`Flask API returned status ${flaskResponse.status}`);
+        }
+      } catch (flaskError) {
+        console.log('Flask API not available, falling back to mock predictions:', flaskError.message);
+      }
     }
 
+    // Fallback to mock predictions if Flask API is not available
+    console.log('Using mock predictions as fallback');
+    
     // Mock prediction logic (simulating the ML models)
     // This demonstrates the same logic as the Python implementation
     
@@ -169,7 +201,9 @@ export default async (req, context) => {
     return new Response(JSON.stringify({
       success: true,
       result: result,
-      note: "This is a demonstration using mock prediction logic. For production use, deploy the full Python ML models."
+      source: 'mock_fallback',
+      note: "Using mock prediction logic as fallback. Flask API may be unavailable.",
+      flask_api_url: getFlaskApiUrl('predict')
     }), {
       status: 200,
       headers: {
