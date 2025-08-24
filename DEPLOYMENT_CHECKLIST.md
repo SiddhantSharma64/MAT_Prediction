@@ -2,55 +2,71 @@
 
 ## ✅ **Pre-Deployment Checklist**
 
-### **1. Code Issues Fixed**
+### **1. Virtual Environment Setup**
+- [x] **Virtual Environment Created**: `venv/` directory created
+- [x] **Pip Upgraded**: pip 25.2 (latest version)
+- [x] **Dependencies Updated**: All packages updated to compatible versions
+- [x] **Python Version**: Python 3.12.7 (updated from 3.9.16)
+
+### **2. Code Issues Fixed**
 - [x] **Debug Mode Removed**: Changed `debug=True` to production configuration
 - [x] **Environment Variables**: Added proper PORT handling for Render
 - [x] **Error Handling**: Added model loading error handling
 - [x] **Health Check**: Added `/health` endpoint for monitoring
 
-### **2. Configuration Files**
-- [x] **render.yaml**: ✅ Properly configured
-- [x] **requirements.txt**: ✅ All dependencies included
-- [x] **.gitignore**: ✅ Excludes unnecessary files
+### **3. Configuration Files**
+- [x] **render.yaml**: ✅ Updated for Python 3.12.7
+- [x] **requirements.txt**: ✅ Updated with compatible versions
+- [x] **runtime.txt**: ✅ Updated to Python 3.12.7
+- [x] **.gitignore**: ✅ Excludes venv/ and unnecessary files
 
-### **3. Model Files**
+### **4. Model Files**
 - [x] **model1_random_forest.joblib**: ✅ Present (5.5MB)
 - [x] **model2_ridge.joblib**: ✅ Present (935B)
 - [x] **scaler1.joblib**: ✅ Present (999B)
 - [x] **polynomial_features.joblib**: ✅ Present (708B)
 
-### **4. Application Structure**
+### **5. Application Structure**
 - [x] **Flask App**: ✅ Properly structured
 - [x] **Templates**: ✅ index.html present
 - [x] **Static Files**: ✅ Properly organized
 - [x] **Routes**: ✅ All endpoints working
 
-### **5. Dependencies**
-- [x] **Flask**: ✅ 2.3.3
-- [x] **scikit-learn**: ✅ 1.3.0
-- [x] **pandas**: ✅ 2.0.3
-- [x] **numpy**: ✅ 1.24.3
-- [x] **joblib**: ✅ 1.3.2
-- [x] **gunicorn**: ✅ 21.2.0
-- [x] **Werkzeug**: ✅ 2.3.7
+### **6. Dependencies (Updated)**
+- [x] **Flask**: ✅ 3.0.0 (updated from 2.3.3)
+- [x] **scikit-learn**: ✅ 1.3.2 (updated from 1.2.2)
+- [x] **pandas**: ✅ 2.1.4 (updated from 1.5.3)
+- [x] **numpy**: ✅ 1.26.2 (updated from 1.23.5)
+- [x] **joblib**: ✅ 1.3.2 (updated from 1.2.0)
+- [x] **gunicorn**: ✅ 21.2.0 (updated from 20.1.0)
+- [x] **Werkzeug**: ✅ 3.0.1 (updated from 2.3.7)
 
 ## 🚀 **Deployment Steps**
 
-### **1. Git Repository Setup**
+### **1. Virtual Environment Activation**
+```bash
+# Activate virtual environment
+source venv/bin/activate
+
+# Or use the activation script
+./activate_env.sh
+```
+
+### **2. Git Repository Setup**
 ```bash
 # Ensure all files are committed
 git add .
-git commit -m "Ready for Render deployment"
+git commit -m "Updated dependencies and virtual environment for Render deployment"
 git push origin main
 ```
 
-### **2. Render Deployment**
+### **3. Render Deployment**
 1. Connect your GitHub repository to Render
 2. Create a new Web Service
 3. Render will automatically detect the `render.yaml` configuration
 4. Deploy will start automatically
 
-### **3. Post-Deployment Verification**
+### **4. Post-Deployment Verification**
 - [ ] Check health endpoint: `https://your-app.onrender.com/health`
 - [ ] Test main application: `https://your-app.onrender.com/`
 - [ ] Verify model predictions work
@@ -63,6 +79,7 @@ git push origin main
 2. **Port Issues**: Ensure PORT environment variable is handled
 3. **Memory Issues**: Models are ~7MB total, should be fine on free tier
 4. **Timeout Issues**: First request might be slow due to model loading
+5. **Version Compatibility**: Updated to Python 3.12.7 for better compatibility
 
 ### **Monitoring:**
 - Use `/health` endpoint to check application status
@@ -77,4 +94,8 @@ git push origin main
 
 ## ✅ **Status: READY FOR DEPLOYMENT**
 
-All critical issues have been resolved. The application is now production-ready for Render deployment.
+All critical issues have been resolved. The application is now production-ready for Render deployment with:
+- ✅ Updated virtual environment
+- ✅ Latest compatible dependencies
+- ✅ Python 3.12.7 runtime
+- ✅ All configuration files updated
