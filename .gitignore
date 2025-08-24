@@ -346,6 +346,7 @@ secrets.json
 DEPLOYMENT.md
 PROJECT_REPORT.md
 DEPLOYMENT_CHECKLIST.md
+NETLIFY_README.md
 
 # Netlify specific
 .netlify/
