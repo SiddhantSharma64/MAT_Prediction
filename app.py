@@ -28,10 +28,35 @@ def predict():
         return jsonify({'success': False, 'error': 'Models not loaded. Please check deployment.'}), 500
     
     try:
-        # Get input data
+        # Get input data - handle both field name formats
         data = request.get_json()
-        pct_min = float(data['pct_min'])
-        cum_min = float(data['cum_min'])
+        if not data:
+            return jsonify({'success': False, 'error': 'No JSON data received'}), 400
+        
+        # Try different possible field names
+        pct_min = None
+        cum_min = None
+        
+        # Check for the field names that might be sent from frontend
+        if 'pct_min' in data:
+            pct_min = float(data['pct_min'])
+        elif 'PCT_MIN_0.25MM_60MSH' in data:
+            pct_min = float(data['PCT_MIN_0.25MM_60MSH'])
+        else:
+            return jsonify({'success': False, 'error': 'Missing PCT_MIN_0.25MM_60MSH field'}), 400
+            
+        if 'cum_min' in data:
+            cum_min = float(data['cum_min'])
+        elif 'CUM_MIN_3.15MM' in data:
+            cum_min = float(data['CUM_MIN_3.15MM'])
+        else:
+            return jsonify({'success': False, 'error': 'Missing CUM_MIN_3.15MM field'}), 400
+        
+        # Validate input ranges
+        if pct_min < 20 or pct_min > 50:
+            return jsonify({'success': False, 'error': 'PCT_MIN_0.25MM_60MSH must be between 20 and 50'}), 400
+        if cum_min < 80 or cum_min > 90:
+            return jsonify({'success': False, 'error': 'CUM_MIN_3.15MM must be between 80 and 90'}), 400
         
         # Model 1: Predict MEAN_SIZE
         input_features = np.array([[pct_min, cum_min]])
@@ -114,8 +139,12 @@ def predict():
         
         return jsonify({'success': True, 'result': result})
         
+    except ValueError as e:
+        return jsonify({'success': False, 'error': f'Invalid input value: {str(e)}'}), 400
+    except KeyError as e:
+        return jsonify({'success': False, 'error': f'Missing required field: {str(e)}'}), 400
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return jsonify({'success': False, 'error': f'Unexpected error: {str(e)}'}), 500
 
 @app.route('/health')
 def health_check():
@@ -124,6 +153,16 @@ def health_check():
         return jsonify({'status': 'healthy', 'models_loaded': True}), 200
     else:
         return jsonify({'status': 'unhealthy', 'models_loaded': False}), 500
+
+# Custom 404 error handler to return JSON
+@app.errorhandler(404)
+def not_found_error(error):
+    return jsonify({'success': False, 'error': 'Not Found', 'message': 'The requested URL was not found on the server.'}), 404
+
+# Custom 500 error handler
+@app.errorhandler(500)
+def internal_error(error):
+    return jsonify({'success': False, 'error': 'Internal Server Error', 'message': 'An unexpected error occurred.'}), 500
 
 if __name__ == '__main__':
     # Production-ready configuration
