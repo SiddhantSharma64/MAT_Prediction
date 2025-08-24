@@ -157,7 +157,7 @@ cython_debug/
 #  JetBrains specific template is maintained in a separate JetBrains.gitignore that can
 #  be added to the global gitignore or merged into this project gitignore.  For a PyCharm
 #  project, it is recommended to include the following files:
-#  .idea/
+# .idea/
 #  *.iml
 #  *.ipr
 #  *.iws
@@ -346,3 +346,18 @@ secrets.json
 DEPLOYMENT.md
 PROJECT_REPORT.md
 DEPLOYMENT_CHECKLIST.md
+
+# Netlify specific
+.netlify/
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Files not needed for Netlify deployment
+app.py
+train_models.py
+render.yaml
+runtime.txt
+activate_env.sh
+.python-version

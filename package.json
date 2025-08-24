@@ -1,0 +1,21 @@
+{
+  "name": "mat-prediction-netlify",
+  "version": "1.0.0",
+  "description": "MAT Prediction application deployed on Netlify",
+  "main": "index.js",
+  "scripts": {
+    "dev": "netlify dev",
+    "build": "echo 'Build completed'",
+    "start": "netlify dev"
+  },
+  "keywords": ["netlify", "ml", "prediction", "material-analysis"],
+  "author": "Your Name",
+  "license": "MIT",
+  "devDependencies": {
+    "@netlify/functions": "^2.0.0",
+    "netlify-cli": "^17.0.0"
+  },
+  "dependencies": {
+    "python-shell": "^5.0.0"
+  }
+}
