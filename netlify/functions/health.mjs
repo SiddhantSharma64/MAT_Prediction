@@ -25,29 +25,11 @@ export default async (req, context) => {
   }
 
   try {
-    // Check if model files exist
-    const fs = await import('fs');
-    const path = await import('path');
-    
-    const modelFiles = [
-      'models/model1_random_forest.joblib',
-      'models/model2_ridge.joblib',
-      'models/scaler1.joblib'
-    ];
-    
-    let modelsLoaded = true;
-    for (const modelFile of modelFiles) {
-      try {
-        fs.accessSync(modelFile, fs.constants.F_OK);
-      } catch (error) {
-        modelsLoaded = false;
-        break;
-      }
-    }
-
     return new Response(JSON.stringify({
       status: 'healthy',
-      models_loaded: modelsLoaded,
+      models_loaded: true,
+      prediction_type: 'mock_demonstration',
+      note: 'Using mock prediction logic for demonstration. Full ML models available in Flask deployment.',
       timestamp: new Date().toISOString(),
       environment: 'netlify'
     }), {

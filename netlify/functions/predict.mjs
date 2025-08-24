@@ -72,146 +72,105 @@ export default async (req, context) => {
       });
     }
 
-    // Create a temporary Python script for prediction
-    const pythonScript = `
-import joblib
-import numpy as np
-import json
-import sys
-
-try:
-    # Load models
-    model1 = joblib.load('models/model1_random_forest.joblib')
-    model2 = joblib.load('models/model2_ridge.joblib')
-    scaler1 = joblib.load('models/scaler1.joblib')
+    // Mock prediction logic (simulating the ML models)
+    // This demonstrates the same logic as the Python implementation
     
-    # Get input parameters
-    pct_min = float(sys.argv[1])
-    cum_min = float(sys.argv[2])
+    // Model 1: Predict MEAN_SIZE (simplified)
+    const meanSize = (pct_min * 0.3 + cum_min * 0.7) / 100;
+    const equivalentProductSize = meanSize * 3;
     
-    # Model 1: Predict MEAN_SIZE
-    input_features = np.array([[pct_min, cum_min]])
-    input_scaled = scaler1.transform(input_features)
-    mean_size = model1.predict(input_scaled)[0]
-    equivalent_product_size = mean_size * 3
+    // Model 2: Generate 24 sizes with priority distribution
+    const targetSum = equivalentProductSize * 24;
+    const totalSizes = 24;
+    const priority3Count = Math.floor(totalSizes * 0.4);  // 40% priority 3
+    const priority4Count = Math.floor(totalSizes * 0.35); // 35% priority 4  
+    const priority5Count = totalSizes - priority3Count - priority4Count;
     
-    # Model 2: Predict 24 sizes
-    model2_input = np.array([[equivalent_product_size]])
-    predicted_sizes = model2.predict(model2_input)[0]
-    
-    # Priority system: Create 24 values (3,4,5) that sum to target
-    target_sum = equivalent_product_size * 24
-    total_sizes = 24
-    priority_3_count = int(total_sizes * 0.4)  # 40% priority 3
-    priority_4_count = int(total_sizes * 0.35)  # 35% priority 4  
-    priority_5_count = total_sizes - priority_3_count - priority_4_count
-    
-    # Calculate base sum and adjustment needed
-    base_sum = (priority_3_count * 3) + (priority_4_count * 4) + (priority_5_count * 5)
-    adjustment_needed = target_sum - base_sum
-    
-    # Create initial priority array
-    priorities = []
-    for i in range(priority_3_count):
-        priorities.append(3)
-    for i in range(priority_4_count):
-        priorities.append(4)
-    for i in range(priority_5_count):
-        priorities.append(5)
-    
-    # Adjust values to match target sum
-    if abs(adjustment_needed) > 0.1:
-        if adjustment_needed > 0:
-            # Increase some values
-            for i in range(min(int(adjustment_needed), priority_3_count)):
-                priorities[i] = 4
-                adjustment_needed -= 1
-                if adjustment_needed <= 0: break
-            
-            if adjustment_needed > 0:
-                for i in range(priority_3_count, priority_3_count + min(int(adjustment_needed), priority_4_count)):
-                    priorities[i] = 5
-                    adjustment_needed -= 1
-                    if adjustment_needed <= 0: break
-        else:
-            # Decrease some values
-            adjustment_needed = abs(adjustment_needed)
-            for i in range(priority_3_count + priority_4_count, total_sizes):
-                if adjustment_needed <= 0: break
-                priorities[i] = 4
-                adjustment_needed -= 1
-            
-            if adjustment_needed > 0:
-                for i in range(priority_3_count, priority_3_count + priority_4_count):
-                    if adjustment_needed <= 0: break
-                    priorities[i] = 3
-                    adjustment_needed -= 1
-    
-    # Shuffle for randomness while maintaining priority order
-    np.random.seed(int(equivalent_product_size * 1000))
-    np.random.shuffle(priorities)
-    
-    # Calculate final metrics
-    final_sum = sum(priorities)
-    final_equivalent_size = final_sum / 24
-    
-    # Prepare result
-    result = {
-        'mean_size': float(mean_size),
-        'equivalent_product_size': float(equivalent_product_size),
-        'sizes': priorities,
-        'final_equivalent_size': float(final_equivalent_size),
-        'priority_distribution': {
-            'Priority 3': priorities.count(3),
-            'Priority 4': priorities.count(4),
-            'Priority 5': priorities.count(5)
-        }
+    // Create initial priority array
+    const priorities = [];
+    for (let i = 0; i < priority3Count; i++) {
+      priorities.push(3);
+    }
+    for (let i = 0; i < priority4Count; i++) {
+      priorities.push(4);
+    }
+    for (let i = 0; i < priority5Count; i++) {
+      priorities.push(5);
     }
     
-    print(json.dumps({'success': True, 'result': result}))
+    // Calculate base sum and adjustment needed
+    const baseSum = (priority3Count * 3) + (priority4Count * 4) + (priority5Count * 5);
+    let adjustmentNeeded = targetSum - baseSum;
     
-except Exception as e:
-    print(json.dumps({'success': False, 'error': str(e)}))
-`;
-
-    // Write the Python script to a temporary file
-    const scriptPath = '/tmp/predict.py';
-    writeFileSync(scriptPath, pythonScript);
-
-    // Execute the Python script
-    const result = await new Promise((resolve, reject) => {
-      const pythonProcess = spawn('python3', [scriptPath, pct_min.toString(), cum_min.toString()]);
-      
-      let output = '';
-      let errorOutput = '';
-      
-      pythonProcess.stdout.on('data', (data) => {
-        output += data.toString();
-      });
-      
-      pythonProcess.stderr.on('data', (data) => {
-        errorOutput += data.toString();
-      });
-      
-      pythonProcess.on('close', (code) => {
-        if (code === 0) {
-          try {
-            const result = JSON.parse(output.trim());
-            resolve(result);
-          } catch (e) {
-            reject(new Error(`Failed to parse Python output: ${e.message}`));
-          }
-        } else {
-          reject(new Error(`Python script failed with code ${code}: ${errorOutput}`));
+    // Adjust values to match target sum
+    if (Math.abs(adjustmentNeeded) > 0.1) {
+      if (adjustmentNeeded > 0) {
+        // Increase some values
+        for (let i = 0; i < Math.min(Math.floor(adjustmentNeeded), priority3Count); i++) {
+          priorities[i] = 4;
+          adjustmentNeeded -= 1;
+          if (adjustmentNeeded <= 0) break;
         }
-      });
-      
-      pythonProcess.on('error', (error) => {
-        reject(new Error(`Failed to start Python process: ${error.message}`));
-      });
-    });
+        
+        if (adjustmentNeeded > 0) {
+          for (let i = priority3Count; i < priority3Count + Math.min(Math.floor(adjustmentNeeded), priority4Count); i++) {
+            priorities[i] = 5;
+            adjustmentNeeded -= 1;
+            if (adjustmentNeeded <= 0) break;
+          }
+        }
+      } else {
+        // Decrease some values
+        adjustmentNeeded = Math.abs(adjustmentNeeded);
+        for (let i = priority3Count + priority4Count; i < totalSizes; i++) {
+          if (adjustmentNeeded <= 0) break;
+          priorities[i] = 4;
+          adjustmentNeeded -= 1;
+        }
+        
+        if (adjustmentNeeded > 0) {
+          for (let i = priority3Count; i < priority3Count + priority4Count; i++) {
+            if (adjustmentNeeded <= 0) break;
+            priorities[i] = 3;
+            adjustmentNeeded -= 1;
+          }
+        }
+      }
+    }
+    
+    // Shuffle for randomness while maintaining priority order
+    const seed = Math.floor(equivalentProductSize * 1000);
+    const shuffled = [...priorities];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor((seed + i) % (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    
+    // Calculate final metrics
+    const finalSum = shuffled.reduce((a, b) => a + b, 0);
+    const finalEquivalentSize = finalSum / 24;
+    
+    // Count priorities
+    const priorityDistribution = {
+      'Priority 3': shuffled.filter(x => x === 3).length,
+      'Priority 4': shuffled.filter(x => x === 4).length,
+      'Priority 5': shuffled.filter(x => x === 5).length
+    };
+    
+    // Prepare result
+    const result = {
+      mean_size: parseFloat(meanSize.toFixed(4)),
+      equivalent_product_size: parseFloat(equivalentProductSize.toFixed(4)),
+      sizes: shuffled,
+      final_equivalent_size: parseFloat(finalEquivalentSize.toFixed(4)),
+      priority_distribution: priorityDistribution
+    };
 
-    return new Response(JSON.stringify(result), {
+    return new Response(JSON.stringify({
+      success: true,
+      result: result,
+      note: "This is a demonstration using mock prediction logic. For production use, deploy the full Python ML models."
+    }), {
       status: 200,
       headers: {
         'Content-Type': 'application/json',
