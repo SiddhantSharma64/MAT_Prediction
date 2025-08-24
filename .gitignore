@@ -345,3 +345,4 @@ secrets.json
 # Project specific exclusions
 DEPLOYMENT.md
 PROJECT_REPORT.md
+DEPLOYMENT_CHECKLIST.md
